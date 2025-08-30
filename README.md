@@ -587,7 +587,7 @@ PASS
 ok      word    0.381s
 ```
 
-Sweet, satisfied we go for a coffee ... When we come back, we find a Slack message from our Slovak colleague complaining about our new package. He says that is doesn't recognize the word ťahať as a palindrome. Really? We turn this complaint into a test case:
+Sweet, satisfied we go for a coffee ... When we come back, we find a Slack message from our Slovak colleague complaining about our new package. He says that it doesn't recognize the word ťahať as a palindrome. Really? We turn this complaint into a test case:
 
 ```go
 // ./word/2/word_test.go
