@@ -1,4 +1,4 @@
-This is the first part of a three-part series. This part introduces the language "building blocks" that will be used in later parts.
+This is the first part of a series introducing Bash programmers to Go. This part goes through the language building blocks that will be used in later parts.
 
 # Ok but why?
 
