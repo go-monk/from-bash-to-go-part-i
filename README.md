@@ -551,111 +551,110 @@ To learn more about reading data in Go see https://github.com/go-monk/reading-da
 
 ## Testing
 
-Let's look at a practical example: finding files in a directory that were modified in the last N days. We'll compare how you might approach this in Bash and Go, and show how Go's built-in testing facilities make it easy to verify your code.
-
-In Bash, you might use the `find` command and some shell scripting:
-
-```bash
-#!/bin/bash
-# Usage: ./recent-files.sh [directory] [days]
-dir="${1:-.}"  # defaults to current directory
-days="${2:-7}" # defaults to 7
-find "$dir" -type f -mtime "-$days"
-```
-
-Testing Bash scripts is usually manual (just running it and eyeballing the output) or done with ad-hoc scripts.
-
-In Go, you can write a program that does the same thing, but with more control, better error handling, and built-in testing. Think about programming vs software engineering I mentioned above.
-
-To walk a folder recursively we use the `filepath.Walk` function. It takes as arguments a folder to walk (`dir`) and an (anonymous) function that's executed for each found file or directory:
+Let's have some fun now, since we are getting tired ... We craft a package `word` that has a function telling us whether a word is a palindrome:
 
 ```go
-// ./recent/1/main.go
-err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-    if err != nil {
-        return err
-    }
-    if !info.IsDir() && info.ModTime().After(days) {
-        fmt.Println(path)
-    }
-    return nil
-})
-```
-
-The function that's executed for each found file/directory knows the file's or directory's `path`, its metadata `info` (name, size, mode, modification time) and any possible error that arises while visiting it. In our example, if there's an error we return from the function and report the error. Otherwise if we visit a file (not a directory) and its modification time is less than `days` we print its path.
-
-This code works but we are not sure whether it's correct. To test it we need to factor out the functionality into a function:
-
-```go
-// ./recent/2/main.go
-func findRecentFiles(dir string, days int) ([]string, error) {
-	var files []string
-
-	cutoff := time.Now().AddDate(0, 0, -days)
-
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+// ./word/1/word.go
+// IsPalindrome reports whether s reads the same forward and backward.
+func IsPalindrome(s string) bool {
+	for i := range s {
+		if s[i] != s[len(s)-1-i] {
+			return false
 		}
-		if !info.IsDir() && info.ModTime().After(cutoff) {
-			files = append(files, path)
-		}
-		return nil
-	})
-
-	return files, err
+	}
+	return true
 }
 ```
 
-Now, how do we test it? Well, we need to create some files with custom modification times. For this we'll use a helper function:
+We range over a string comparing its edge elements. We start with `i == 0` thus comparing the first element (at index 0) with the last element (at index that is one less than the string size). In the second iteration we compare the second element with the second to last. And so on. If all are the same, we have a palindrome! Nice and easy.
+
+But since we know now that we should be doing software engineering instead of programming, or as John Osterhout writes in "A Philosophy of Software Design" strategic programming instead of tactical programming, we take the effort of writing a test for our function:
 
 ```go
-// ./recent/2/main_test.go
-func createTestFile(path string, mtime time.Time) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	f.Close()
-	return os.Chtimes(path, time.Time{}, mtime)
-}
-```
-
-This function creates an empty file at `path` and sets its modification time to `mtime`. And here's the test:
-
-```go
-// ./recent/2/main_test.go
-func TestFindRecentFiles(t *testing.T) {
-	tempDir := t.TempDir()
-
-	if err := createTestFile(filepath.Join(tempDir, "file1.txt"), time.Now().AddDate(0, 0, -1)); err != nil {
-		t.Fatal(err)
-	}
-	if err := createTestFile(filepath.Join(tempDir, "file2.txt"), time.Now().AddDate(0, 0, -10)); err != nil {
-		t.Fatal(err)
-	}
-
-	files, err := findRecentFiles(tempDir, 7)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(files) != 1 {
-		t.Errorf("wanted 1 file got %d", len(files))
-	}
-	if files[0] != filepath.Join(tempDir, "file1.txt") {
-		t.Errorf("wanted %s, got %s", filepath.Join(tempDir, "file1.txt"), files[0])
+// ./word/1/word_test.go
+func TestIsPalindrome(t *testing.T) {
+	if !IsPalindrome("kayak") {
+		t.Error(`IsPalindrome("kayak") == false`)
 	}
 }
 ```
 
-It creates two test files inside a temporary directory. One file has the modification time of 1 day ago the other one of 10 days ago. Since we search for files that have been modified 7 or less days ago we expect the `findRecentFiles` function to return just one file named `file1.txt`:
+Let's see:
 
-```
-$ go test -v * 
-=== RUN   TestFindRecentFiles
---- PASS: TestFindRecentFiles (0.00s)
+```sh
+$ go test
 PASS
-ok      command-line-arguments  0.185s
+ok      word    0.381s
+```
+
+Sweet, satisfied we go for a coffee ... When we come back, we find a Slack message from our Slovak colleague complaining about our new package. He says that is doesn't recognize the word ťahať as a palindrome. Really? We turn this complaint into a test case:
+
+```go
+// ./word/2/word_test.go
+func TestIsPalindrome(t *testing.T) {
+	if !IsPalindrome("ťahať") {
+		t.Error(`IsPalindrome("ťahať") == false`)
+	}
+}
+```
+
+When we run the test it fails, so our colleague is right. Now, we can go for the easy option and comment on the function that the input must be an ASCII sequence. But since we have already decided for strategic programming we must take the difficult path. After some research we find out [how Go strings really work](https://go.dev/blog/strings). So strings are just (read-only) sequences of bytes. *Any* bytes. A string is not required to hold Unicode text, UTF-8 text, or any other predefined format. Therefore let's first convert the string to a rune slice:
+
+```go
+// ./word/2/word.go
+func IsPalindrome(s string) bool {
+	runes := []rune(s)
+	for i := range runes {
+		if runes[i] != runes[len(runes)-1-i] {
+			return false
+		}
+	}
+	return true
+}
+```
+
+Now the tests pass again. Phew...
+
+It didn't take long and we've got another bug report. Some smartass came up with this cool sentence: `A man, a plan, a canal: Panama`. Our current implementation of `IsPalindrome` thinks it's not a palindrome. Ok, first let's improve our tests, we'll use something called table-driven testing:
+
+```go
+// ./word/3/word_test.go
+func TestIsPalindrome(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"kayak", true},
+		{"ťahať", true},
+		{"A man, a plan, a canal: Panama", true},
+		{"", true},
+		{"ab", false},
+	}
+	for _, test := range tests {
+		if got := IsPalindrome(test.input); got != test.want {
+			t.Errorf("IsPalindrome(%q) = %v", test.input, got)
+		}
+	}
+}
+```
+
+Now, after some head scratching we realize the problem is we don't ignore whitespace, punctuation and letter case. Let's fix that:
+
+```go
+func IsPalindrome(s string) bool {
+	var letters []rune
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			letters = append(letters, unicode.ToLower(r))
+		}
+	}
+	for i := range letters {
+		if letters[i] != letters[len(letters)-1-i] {
+			return false
+		}
+	}
+	return true
+}
 ```
 
 ## Goroutines and channels
