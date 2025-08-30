@@ -1,8 +1,8 @@
-Source: https://github.com/go-monk/from-bash-to-go-series
-
 This is the first part of a three-part series. This part introduces the language "building blocks" that will be used in later parts.
 
 # Ok but why?
+
+> A language that doesn't affect the way you think about programming is not worth knowing. - Alan J. Perlis
 
 You might be wondering along these lines - I already kind of know Bash (or a similar language) and can do all I need in it. It's easy and fast. Why should I learn Go? That's a good question. Always ask why because the answer to a why question provides a reason and thus understanding and motivation. In our case I think the answer has to do with the difference between programming and software engineering.
 
