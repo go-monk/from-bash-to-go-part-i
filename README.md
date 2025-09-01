@@ -14,7 +14,7 @@ The most important thing to do when doing the software engineering is to reduce 
 
 In this section I swiftly introduce some of the language building blocks that I hope will help you start understanding the Go syntax, semantics and idioms. I recommend actually writing (copying) the code below in your favorite editor. And then running it. And maybe changing it a bit and running again. If you break the code be happy, that's a way to learn :-).
 
-## Packages and modules
+## Writing and running Go code
 
 Packages are Go's way of organizing and (re)using code.
 
