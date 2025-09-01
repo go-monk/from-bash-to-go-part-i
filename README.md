@@ -517,8 +517,6 @@ Now when we pass it as an argument to `fmt.Print` its `String` method is called 
 backup of personal code (1024 bytes) was last done on 2025-07-09 16:47:49
 ```
 
-## I/O operations
-
 Another standard library interface is the [io.Writer](https://pkg.go.dev/io#Writer). Any (concrete) type that has the method:
 
 ```go
