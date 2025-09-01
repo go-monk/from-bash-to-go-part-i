@@ -57,8 +57,6 @@ It can be visualized like this:
 
 Go identifiers - constants, variables, types and functions - are visible (exported) outside of a package when their name starts with an uppercase letter. Otherwise they are confined to the current package.
 
-## Building and running
-
 Let's create our first package. In case you want to run your code (as opposed to using it as an importable library) you need at least the `main` package.
 
 First create a directory and change to it:
