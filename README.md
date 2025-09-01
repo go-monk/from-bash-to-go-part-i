@@ -182,7 +182,7 @@ Sometimes you might need to convert a type:
 ```go
 name := "Jack"
 age := "40"
-// Convert string to slice of bytes or runes
+// Convert string to slice of runes or bytes
 nameRunes := []rune(name) // when you care about UTF-8 encoded characters
 nameBytes := []byte(name) // when you care about raw data (I/O, network, crypto, performance)
 // Convert string to an int
